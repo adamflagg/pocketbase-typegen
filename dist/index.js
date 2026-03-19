@@ -105,7 +105,14 @@ function containsGeoPoint(collections) {
 }
 
 // src/collections.ts
-function createCollectionEnum(collectionNames) {
+function createCollectionEnum(collectionNames, useConst) {
+  if (useConst) {
+    const collections2 = collectionNames.map((name) => `	${toPascalCase(name)}: "${name}",`).join("\n");
+    return `export const Collections = {
+${collections2}
+} as const;
+export type Collections = typeof Collections[keyof typeof Collections];`;
+  }
   const collections = collectionNames.map((name) => `	${toPascalCase(name)} = "${name}",`).join("\n");
   const typeString = `export enum Collections {
 ${collections}
@@ -292,8 +299,23 @@ function createTypeField(collectionName, fieldSchema) {
   const required = fieldSchema.type === "autodate" && !fieldSchema.onCreate || fieldSchema.type !== "autodate" && !fieldSchema.required ? "?" : "";
   return `	${fieldName}${required}: ${typeString}`;
 }
-function createSelectOptions(recordName, fields) {
+function createSelectOptions(recordName, fields, useConst) {
   const selectFields = fields.filter((field) => field.type === "select");
+  if (useConst) {
+    const typestring2 = selectFields.map((field) => {
+      const name = getOptionEnumName(recordName, field.name);
+      const values = getOptionValues(field);
+      const entries = values.map(
+        (val) => `	"${getSelectOptionEnumName(val)}": "${val}",`
+      ).join("\n");
+      return `export const ${name} = {
+${entries}
+} as const;
+export type ${name} = typeof ${name}[keyof typeof ${name}];
+`;
+    }).join("\n");
+    return typestring2;
+  }
   const typestring = selectFields.map(
     (field) => `export enum ${getOptionEnumName(recordName, field.name)} {
 ${getOptionValues(field).map((val) => `	"${getSelectOptionEnumName(val)}" = "${val}",`).join("\n")}
@@ -318,7 +340,7 @@ function generate(results, options2) {
   results.sort((a, b) => a.name <= b.name ? -1 : 1).forEach((row) => {
     if (row.name) collectionNames.push(row.name);
     if (row.fields) {
-      recordTypes.push(createRecordType(row.name, row.fields));
+      recordTypes.push(createRecordType(row.name, row.fields, options2.useConst));
       responseTypes.push(createResponseType(row));
     }
   });
@@ -327,7 +349,7 @@ function generate(results, options2) {
   const fileParts = [
     EXPORT_COMMENT,
     options2.sdk && IMPORTS,
-    createCollectionEnum(sortedCollectionNames),
+    createCollectionEnum(sortedCollectionNames, options2.useConst),
     ALIAS_TYPE_DEFINITIONS,
     includeGeoPoint && GEOPOINT_TYPE_DEFINITION,
     EXPAND_TYPE_DEFINITION,
@@ -344,8 +366,8 @@ function generate(results, options2) {
   ];
   return fileParts.filter(Boolean).join("\n\n") + "\n";
 }
-function createRecordType(name, schema) {
-  const selectOptionEnums = createSelectOptions(name, schema);
+function createRecordType(name, schema, useConst) {
+  const selectOptionEnums = createSelectOptions(name, schema, useConst);
   const typeName = toPascalCase(name);
   const genericArgs = getGenericArgStringWithDefault(schema, {
     includeExpand: false
@@ -411,7 +433,8 @@ async function main(options2) {
     );
   }
   const typeString = generate(schema, {
-    sdk: options2.sdk ?? true
+    sdk: options2.sdk ?? true,
+    useConst: options2.useConst ?? false
   });
   await saveFile(options2.out, typeString);
   return typeString;
@@ -452,6 +475,9 @@ program.name("Pocketbase Typegen").version(version).description(
 ).option(
   "--no-sdk",
   "Removes the pocketbase package dependency. A typed version of the SDK will not be generated."
+).option(
+  "--use-const",
+  "Use 'as const' objects instead of TypeScript enums. Compatible with erasableSyntaxOnly."
 );
 program.parse(process.argv);
 var options = program.opts();
