@@ -10,8 +10,8 @@ export function createCollectionEnum(
       .join("\n")
     return `export const Collections = {
 ${collections}
-} as const;
-export type Collections = typeof Collections[keyof typeof Collections];`
+} as const
+export type Collections = typeof Collections[keyof typeof Collections]`
   }
 
   const collections = collectionNames

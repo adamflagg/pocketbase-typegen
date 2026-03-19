@@ -6,8 +6,8 @@ exports[`createSelectOptions creates as const objects when useConst is true 1`] 
 	"two": "two",
 	"space space": "space space",
 	"$@#*(&#%": "$@#*(&#%",
-} as const;
-export type ChooseTitleOptions = typeof ChooseTitleOptions[keyof typeof ChooseTitleOptions];
+} as const
+export type ChooseTitleOptions = typeof ChooseTitleOptions[keyof typeof ChooseTitleOptions]
 "
 `;
 

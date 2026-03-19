@@ -110,8 +110,8 @@ function createCollectionEnum(collectionNames, useConst) {
     const collections2 = collectionNames.map((name) => `	${toPascalCase(name)}: "${name}",`).join("\n");
     return `export const Collections = {
 ${collections2}
-} as const;
-export type Collections = typeof Collections[keyof typeof Collections];`;
+} as const
+export type Collections = typeof Collections[keyof typeof Collections]`;
   }
   const collections = collectionNames.map((name) => `	${toPascalCase(name)} = "${name}",`).join("\n");
   const typeString = `export enum Collections {
@@ -310,8 +310,8 @@ function createSelectOptions(recordName, fields, useConst) {
       ).join("\n");
       return `export const ${name} = {
 ${entries}
-} as const;
-export type ${name} = typeof ${name}[keyof typeof ${name}];
+} as const
+export type ${name} = typeof ${name}[keyof typeof ${name}]
 `;
     }).join("\n");
     return typestring2;

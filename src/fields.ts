@@ -107,8 +107,8 @@ export function createSelectOptions(
           .join("\n")
         return `export const ${name} = {
 ${entries}
-} as const;
-export type ${name} = typeof ${name}[keyof typeof ${name}];
+} as const
+export type ${name} = typeof ${name}[keyof typeof ${name}]
 `
       })
       .join("\n")
